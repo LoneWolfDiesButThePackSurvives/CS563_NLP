@@ -501,7 +501,10 @@ def iterate_training(args, trainer, train_trees, train_sequences, transitions, d
     # Various experiments generally show about 0.5 F1 loss on various
     # datasets when using 'mean' instead of 'sum' for reduction
     # (Remember to adjust the weight decay when rerunning that experiment)
-    model_loss_function = nn.CrossEntropyLoss(reduction='sum')
+    if args['loss'] == 'cross':
+        model_loss_function = nn.CrossEntropyLoss(reduction='sum')
+    else:
+        model_loss_function = nn.CrossEntropyLoss(reduction='none')
     if args['cuda']:
         model_loss_function.cuda()
 
@@ -738,6 +741,14 @@ def train_model_one_batch(epoch, batch_idx, model, batch, transition_tensors, mo
     answers = torch.cat(all_answers)
 
     tree_loss = model_loss_function(errors, answers)
+    # Use the model's assessment of how likely the correct answer is
+    # to weight the loss for a each error
+    # multi-category focal loss, in other words
+    if args['loss'] == 'focal':
+        probs = torch.softmax(errors, 1)
+        probs = probs.gather(1, answers.view(-1, 1))
+        tree_loss = tree_loss.squeeze() * ((1 - probs) ** args['loss_focal_gamma']).squeeze()
+        tree_loss = tree_loss.sum()
     tree_loss.backward()
     if args['watch_regex']:
         matched = False

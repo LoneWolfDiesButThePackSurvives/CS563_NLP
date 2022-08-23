@@ -310,6 +310,9 @@ def parse_args(args=None):
 
     parser.add_argument('--learning_rate_warmup', default=0, type=int, help='Number of epochs to ramp up learning rate from 0 to full.  Set to 0 to always use the chosen learning rate')
 
+    parser.add_argument('--loss', default='cross', help='cross or focal.  Focal requires `pip install focal_loss_torch`')
+    parser.add_argument('--loss_focal_gamma', default=2, type=int, help='gamma value for a focal loss')
+
     # When using word_dropout and predict_dropout in conjunction with relu, one particular experiment produced the following dev scores after 300 iterations:
     # 0.0: 0.9085
     # 0.2: 0.9165
