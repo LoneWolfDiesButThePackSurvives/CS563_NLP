@@ -116,11 +116,14 @@ def build_nonlinearity(nonlinearity):
         return NONLINEARITY[nonlinearity]()
     raise ValueError('Chosen value of nonlinearity, "%s", not handled' % nonlinearity)
 
-def build_optimizer(args, model):
+def build_optimizer(args, model, is_frozen_name=None):
     """
     Build an optimizer based on the arguments given
     """
-    parameters = [param for name, param in model.named_parameters() if not model.is_unsaved_module(name)]
+    if is_frozen_name is None:
+        parameters = [param for name, param in model.named_parameters() if not model.is_unsaved_module(name)]
+    else:
+        parameters = [param for name, param in model.named_parameters() if not model.is_unsaved_module(name) and not is_frozen_name(name)]
     if args['optim'].lower() == 'sgd':
         optimizer = optim.SGD(parameters, lr=args['learning_rate'], momentum=args['momentum'], weight_decay=args['weight_decay'])
     elif args['optim'].lower() == 'adadelta':

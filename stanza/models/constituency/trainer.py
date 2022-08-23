@@ -352,7 +352,9 @@ def build_trainer(args, train_trees, dev_trees, foundation_cache, model_load_fil
         if args['cuda']:
             model.cuda()
         model.copy_with_new_structure(trainer.model)
-        optimizer = build_optimizer(args, model)
+        # TODO: a different mechanism?
+        is_frozen = lambda x: not x.startswith("partitioned_transformer_module") and not x.startswith("word_lstm.weight_ih_l0")
+        optimizer = build_optimizer(args, model, is_frozen)
         scheduler = build_scheduler(args, optimizer)
         trainer = Trainer(args, model, optimizer, scheduler)
     elif args['multistage']:
